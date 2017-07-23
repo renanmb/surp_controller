@@ -1,9 +1,17 @@
+# -*- coding: utf-8 -*-
+"""
+Spyder Editor
+
+This is a temporary script file.
+"""
+
 #!/usr/bin/python
 import rospy
 import roslib
 
 # Messages
 from std_msgs.msg import Float32
+from std_msgs.msg import Bool
 
 # Issue commands to the GoPiGo motors to achieve the target velocity
 # Use a PID that compares the error based on encoder readings
@@ -38,9 +46,13 @@ class ControlsToMotors:
     self.lwheel_angular_vel_motor_pub = rospy.Publisher('lwheel_angular_vel_motor', Float32, queue_size=10)
     self.rwheel_angular_vel_motor_pub = rospy.Publisher('rwheel_angular_vel_motor', Float32, queue_size=10)
 
-    # Publish commands to the arduino
+    # Publish commands to the arduino ***************************************
     self.motor1_cmd_pub = rospy.Publisher("motor1_cmd", Float32, queue_size=10)
     self.motor2_cmd_pub = rospy.Publisher("motor2_cmd", Float32, queue_size=10)
+    
+    # Publish motor direction to robot******************************
+    self.motor1_dir_pub = rospy.Publisher("motor1_dir", bool, queue_size=10)
+    self.motor2_dir_pub = rospy.Publisher("motor2_dir", bool, queue_size=10)
 
     # Read in encoders for PID control
     self.lwheel_angular_vel_enc_sub = rospy.Subscriber('lwheel_angular_vel_enc', Float32, self.lwheel_angular_vel_enc_callback)    
@@ -63,22 +75,32 @@ class ControlsToMotors:
     self.lwheel_angular_vel_enc = 0
     self.rwheel_angular_vel_enc = 0
 
+    # motor_cmd I dont know if it is necessary
+    self.motor1_cmd = 0
+    self.motor2_cmd = 0
+    self.motor1_dir = True
+    self.motor2_dir = True
+    
   # ==================================================
   # Publish motor cmd to the robot
   # ==================================================
   def motor1_cmd_pub(self, msg):
-  
+    self.motor1_cmd = msg.data
   def motor2_cmd_pub(self, msg):
-
- 
+    self.motor2_cmd = msg.data
+  def motor1_dir_pub(self, msg):
+    self.motor1_dir = msg.data
+  def motor2_dir_pub(self, msg):
+    self.motor2_dir = msg.data
+    
   # ==================================================
   # Read in tangential velocity targets
   # ==================================================
   def lwheel_tangent_vel_target_callback(self, msg):
-    self.lwheel_tangent_vel_target = msg.data
+      self.lwheel_tangent_vel_target = msg.data
 
   def rwheel_tangent_vel_target_callback(self, msg):
-    self.rwheel_tangent_vel_target = msg.data
+      self.rwheel_tangent_vel_target = msg.data
 
   # ==================================================
   # Read in encoder readings for PID
@@ -131,13 +153,20 @@ class ControlsToMotors:
   def motorcmd_2_robot(self, wheel='left', motor_command=0):
     if self.gopigo_on:
       motor_command_raw = int(abs(motor_command))
-      import gopigo
       if wheel == 'left':
-        if motor_command >= 0: gopigo.motor1(1,motor_command_raw) #use a publisher
-        elif motor_command < 0: gopigo.motor1(0,motor_command_raw) #use a publisher
+        if motor_command >= 0: 
+          self.motor1_cmd = motor_command_raw #use a publisher
+          self.motor1_dir = True
+        elif motor_command < 0: 
+          self.motor1_cmd = motor_command_raw #use a publisher
+          self.motor1_dir = False #I had to split in 2 publisher so it stay simple
       if wheel == 'right':
-        if motor_command >= 0: gopigo.motor2(1,motor_command_raw) #use a publisher
-        elif motor_command < 0: gopigo.motor2(0,motor_command_raw) #use a publisher
+        if motor_command >= 0: 
+          self.motor2_cmd = motor_command_raw #use a publisher
+          self.motor2_dir = True
+        elif motor_command < 0: 
+          self.motor2_cmd = motor_command_raw #use a publisher
+          self.motor2_dir = False
 
   def lwheel_update(self):
     # Compute target angular velocity
@@ -169,10 +198,12 @@ class ControlsToMotors:
 
   #motor cmd publish
   def motor1_update(self):
-    self.motor1_cmd_pub.publish(self.?????)
+    self.motor1_cmd_pub.publish(self.motor1_cmd)
+    self.motor1_dir_pub.publish(self.motor1_dir)
 
   def motor2_update(self):
-    self.motor2_cmd_pub.publish(self.?????)  
+    self.motor2_cmd_pub.publish(self.motor2_cmd)
+    self.motor1_dir_pub.publish(self.motor1_dir)
 
   # When given no commands for some time, do not move
   def spin(self):
@@ -189,7 +220,7 @@ class ControlsToMotors:
 
   def shutdown(self):
     rospy.loginfo("Stop gopigo_controller")
-  	# Stop message
+      # Stop message
     self.lwheel_angular_vel_target_pub.publish(0)
     self.rwheel_angular_vel_target_pub.publish(0)
     self.lwheel_angular_vel_control_pub.publish(0)
@@ -204,4 +235,3 @@ def main():
 
 if __name__ == '__main__':
   main(); 
-
