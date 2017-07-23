@@ -17,12 +17,12 @@ from std_msgs.msg import Bool
 # Use a PID that compares the error based on encoder readings
 class ControlsToMotors:
   def __init__(self):
-    rospy.init_node('gopigo_controller')
+    rospy.init_node('surp_controller')
     self.rate = rospy.get_param('~rate', 50)
 
-    # Wheel can turn ~17 ticks per second which is approx 5.34 rad / s when motor_cmd = 255
+    # Wheel can turn ~17 ticks per second which is approx 5.34 rad / s when motor_cmd = 255 ******Modify - calibrate according to the Stepper motor
     self.motor_max_angular_vel = rospy.get_param('~motor_max_angular_vel',5.32) 
-    # Wheel can turn ~6 ticks per second which is approx 5.34 rad / s when motor_cmd = 125
+    # Wheel can turn ~6 ticks per second which is approx 5.34 rad / s when motor_cmd = 125  ******Modify - calibrate according to the Stepper motor
     self.motor_min_angular_vel = rospy.get_param('~motor_min_angular_vel',1.28)
     # Corresponding motor commands
     self.motor_cmd_max = rospy.get_param('~motor_cmd_max',255)
@@ -207,7 +207,7 @@ class ControlsToMotors:
 
   # When given no commands for some time, do not move
   def spin(self):
-    rospy.loginfo("Start gopigo_controller")
+    rospy.loginfo("Start surp_controller")
     rate = rospy.Rate(self.rate)
     
     rospy.on_shutdown(self.shutdown)
@@ -219,7 +219,7 @@ class ControlsToMotors:
     rospy.spin();
 
   def shutdown(self):
-    rospy.loginfo("Stop gopigo_controller")
+    rospy.loginfo("Stop surp_controller")
       # Stop message
     self.lwheel_angular_vel_target_pub.publish(0)
     self.rwheel_angular_vel_target_pub.publish(0)
