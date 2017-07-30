@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
-
 #!/usr/bin/python
 import rospy
 import roslib
@@ -234,4 +227,4 @@ def main():
   controls_to_motors.spin()
 
 if __name__ == '__main__':
-  main(); 
+	main(); 
